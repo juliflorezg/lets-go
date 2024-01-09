@@ -8,6 +8,10 @@
   <body>
     <header>
       <h1><a href="/">Snippetbox</a></h1>
+      <!-- this block acts like a template action but we can define default content for this 'block' if the template doesn't exist-->
+      {{block "sidebar" .}}
+      <p>My default sidebar content</p>
+      {{end}}
     </header>
     {{template "nav" .}}
     <main>{{template "main" .}}</main>
