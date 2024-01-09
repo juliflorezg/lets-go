@@ -6,6 +6,13 @@ import (
 )
 
 func home(w http.ResponseWriter, r *http.Request) {
+
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		// important to return from handler, otherwise it would keep executing
+		// and write "Hello from Snippetbox" message to the response
+		return
+	}
 	w.Write([]byte("Hello from Snippetbox"))
 }
 
@@ -21,7 +28,7 @@ func main() {
 	// register the home function as the handler for the "/" URL route/pattern
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", home)
-  // Here we're registering two new handler functions and corresponding URL patterns with the servermux
+	// Here we're registering two new handler functions and corresponding URL patterns with the servermux
 	mux.HandleFunc("/snippet/create", snippetCreate)
 	mux.HandleFunc("/snippet/view", snippetView)
 
