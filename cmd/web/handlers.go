@@ -17,8 +17,15 @@ func home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	files := []string{
+		"./ui/html/base.tmpl.html",
+		"./ui/html/partials/nav.tmpl.html",
+		"./ui/html/pages/home.tmpl.html",
+	}
+
 	// we get back a template set from file reads
-	ts, err := template.ParseFiles("./ui/html/pages/home.tmpl.html")
+	// ts, err := template.ParseFiles("./ui/html/pages/home.tmpl.html")
+	ts, err := template.ParseFiles(files...)
 
 	if err != nil {
 		log.Print(err.Error())
@@ -27,7 +34,10 @@ func home(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// we use execute method to write the template to the response body. Second parameter represents dynamic data
-	err = ts.Execute(w, nil)
+	// err = ts.Execute(w, nil)
+
+	// we know hace to use the ExecuteTemplate() method to write the content of the "base" template as the response body.
+	err = ts.ExecuteTemplate(w, "base", nil)
 
 	if err != nil {
 		log.Print(err.Error())
