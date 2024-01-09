@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"text/template"
 )
 
 func home(w http.ResponseWriter, r *http.Request) {
@@ -15,7 +16,23 @@ func home(w http.ResponseWriter, r *http.Request) {
 		// and write "Hello from Snippetbox" message to the response
 		return
 	}
-	w.Write([]byte("Hello from Snippetbox"))
+
+	// we get back a template set from file reads
+	ts, err := template.ParseFiles("./ui/html/pages/home.tmpl.html")
+
+	if err != nil {
+		log.Print(err.Error())
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	// we use execute method to write the template to the response body. Second parameter represents dynamic data
+	err = ts.Execute(w, nil)
+
+	if err != nil {
+		log.Print(err.Error())
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
 }
 
 func snippetCreate(w http.ResponseWriter, r *http.Request) {
@@ -36,16 +53,16 @@ func snippetCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Cache-Control", "public, max-age=31536000")
-	w.Header().Add("Cache-Control", "public")
-	w.Header().Add("cache-control", "max-age=31536000")
+	// w.Header().Set("Cache-Control", "public, max-age=31536000")
+	// w.Header().Add("Cache-Control", "public")
+	// w.Header().Add("cache-control", "max-age=31536000")
 
 	w.Write([]byte("Create a new snippet..."))
 
-	fmt.Println(w.Header())
-	fmt.Println(w.Header().Get("Cache-Control"))
-	fmt.Println(w.Header().Values("Cache-Control"))
-	fmt.Println(len(w.Header().Values("Cache-Control")))
+	// fmt.Println(w.Header())
+	// fmt.Println(w.Header().Get("Cache-Control"))
+	// fmt.Println(w.Header().Values("Cache-Control"))
+	// fmt.Println(len(w.Header().Values("Cache-Control")))
 }
 
 func snippetView(w http.ResponseWriter, r *http.Request) {
@@ -64,26 +81,4 @@ func snippetView(w http.ResponseWriter, r *http.Request) {
 
 func fooHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Foo"))
-}
-
-func main() {
-	// Here we use the http.NewServeMux() fun to initialize a new servermux(router), then
-	// register the home function as the handler for the "/" URL route/pattern
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", home)
-	// Here we're registering two new handler functions and corresponding URL patterns with the servermux
-	mux.HandleFunc("/snippet/create", snippetCreate)
-	mux.HandleFunc("/snippet/view", snippetView)
-	//* by including a host name in the URL pattern, we can route requests based on the host part of the URL,
-	//* the handler would be invoked for requests like 'http://snippet.view.org/anypath'
-	// mux.HandleFunc("snippet.view.org/", snippetView)
-	//subtree path, if we make a request to /foo it will automatically redirect to /foo/
-	mux.HandleFunc("/foo/", fooHandler)
-
-	log.Println("starting server on port :4000")
-
-	err := http.ListenAndServe(":4000", mux)
-	log.Fatal(err)
-
-	// v:= bird object
 }
