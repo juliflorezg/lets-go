@@ -24,10 +24,13 @@ func snippetCreate(w http.ResponseWriter, r *http.Request) {
 		// We use set to add an "Allow: POST" header to the response header map
 		w.Header().Set("allow", "POST") 
 		
-		w.WriteHeader(405)
+		// w.WriteHeader(405)
 		// w.WriteHeader(404) // we can only use WriteHeader once per response and any subsequent try to change the status code once it has changed won't succeed, we get the error 2024/01/09 12:27:45 http: superfluous response.WriteHeader call from main.snippetCreate (main.go:25)
 		// w.Header().Set("allow", "POST") // ! won't work, must be called before any WriteHeader() or Write()
-		w.Write([]byte("Method not allowed")) 
+		// w.Write([]byte("Method not allowed")) 
+
+		// this line is a shortcut for WriteHeader & Write above
+		http.Error(w, "Method not allowed", 405)
 		
 		return
 	}
