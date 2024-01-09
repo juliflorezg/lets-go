@@ -20,23 +20,33 @@ func home(w http.ResponseWriter, r *http.Request) {
 func snippetCreate(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println(r.Method)
-	if r.Method != "POST" {
+	if r.Method != http.MethodPost {
 		// We use set to add an "Allow: POST" header to the response header map
-		w.Header().Set("allow", "POST") 
-		
+		w.Header().Set("allow", http.MethodPost)
+
 		// w.WriteHeader(405)
 		// w.WriteHeader(404) // we can only use WriteHeader once per response and any subsequent try to change the status code once it has changed won't succeed, we get the error 2024/01/09 12:27:45 http: superfluous response.WriteHeader call from main.snippetCreate (main.go:25)
-		// w.Header().Set("allow", "POST") // ! won't work, must be called before any WriteHeader() or Write()
-		// w.Write([]byte("Method not allowed")) 
+		// w.Header().Set("allow", "POST") //! won't work, must be called before any WriteHeader() or Write()
+		// w.Write([]byte("Method not allowed"))
 
 		// this line is a shortcut for WriteHeader & Write above
-		http.Error(w, "Method not allowed", 405)
-		
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+
 		return
 	}
 
+	w.Header().Set("Cache-Control", "public, max-age=31536000")
+	w.Header().Add("Cache-Control", "public")
+	w.Header().Add("cache-control", "max-age=31536000")
+
 	w.Write([]byte("Create a new snippet..."))
+
+	fmt.Println(w.Header())
+	fmt.Println(w.Header().Get("Cache-Control"))
+	fmt.Println(w.Header().Values("Cache-Control"))
+	fmt.Println(len(w.Header().Values("Cache-Control")))
 }
+
 func snippetView(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Display a specific snippet..."))
 }
