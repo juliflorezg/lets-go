@@ -1,11 +1,19 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
 )
 
 func main() {
+	// new command line flag, name addr, default value :4000
+	addr := flag.String("addr", ":4000", "HTTP Network Address")
+
+	// this assigns the value passed on runtime to the addr variable
+	// must be used before using the addr variable
+	flag.Parse()
+
 	// Here we use the http.NewServeMux() fun to initialize a new servermux(router), then
 	// register the home function as the handler for the "/" URL route/pattern
 	mux := http.NewServeMux()
@@ -25,8 +33,8 @@ func main() {
 	//subtree path, if we make a request to /foo it will automatically redirect to /foo/
 	mux.HandleFunc("/foo/", fooHandler)
 
-	log.Println("starting server on port :4000")
+	log.Printf("starting server on port %s", *addr)
 
-	err := http.ListenAndServe(":4000", mux)
+	err := http.ListenAndServe(*addr, mux)
 	log.Fatal(err)
 }
