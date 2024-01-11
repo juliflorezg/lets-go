@@ -2,8 +2,9 @@ package main
 
 import (
 	"flag"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 )
 
 func main() {
@@ -13,6 +14,10 @@ func main() {
 	// this assigns the value passed on runtime to the addr variable
 	// must be used before using the addr variable
 	flag.Parse()
+
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		AddSource: true,
+	}))
 
 	// Here we use the http.NewServeMux() fun to initialize a new servermux(router), then
 	// register the home function as the handler for the "/" URL route/pattern
@@ -33,8 +38,9 @@ func main() {
 	//subtree path, if we make a request to /foo it will automatically redirect to /foo/
 	mux.HandleFunc("/foo/", fooHandler)
 
-	log.Printf("starting server on port %s", *addr)
+	logger.Info("starting server", "addr", *addr)
 
 	err := http.ListenAndServe(*addr, mux)
-	log.Fatal(err)
+	logger.Error(err.Error())
+	os.Exit(1)
 }
