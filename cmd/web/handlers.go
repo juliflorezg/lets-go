@@ -10,7 +10,8 @@ import (
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 	if r.URL.Path != "/" {
-		http.NotFound(w, r)
+		// http.NotFound(w, r)
+		app.notFound(w)
 		// important to return from handler, otherwise it would keep executing
 		// and write "Hello from Snippetbox" message to the response
 		return
@@ -27,9 +28,10 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	ts, err := template.ParseFiles(files...)
 
 	if err != nil {
-		app.logger.Error(err.Error(), "method", r.Method, "uri", r.URL.RequestURI())
+		// app.logger.Error(err.Error(), "method", r.Method, "uri", r.URL.RequestURI())
 		// log.Print(err.Error())
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		// http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		app.serverError(w, r, err)
 		return
 	}
 
@@ -41,8 +43,9 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		// log.Print(err.Error())
-		app.logger.Error(err.Error(), "method", r.Method, "uri", r.URL.RequestURI())
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		// app.logger.Error(err.Error(), "method", r.Method, "uri", r.URL.RequestURI())
+		// http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		app.serverError(w, r, err)
 	}
 }
 
@@ -59,7 +62,8 @@ func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 		// w.Write([]byte("Method not allowed"))
 
 		// this line is a shortcut for WriteHeader & Write above
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		// http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		app.clientError(w, http.StatusMethodNotAllowed)
 
 		return
 	}
@@ -81,8 +85,9 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	fmt.Printf("id: ->%v<-\n", id)
 	if err != nil || id < 1 {
-		fmt.Println("error:", err)
-		http.Error(w, "Bad Request", http.StatusBadRequest)
+		// fmt.Println("error:", err)
+		// http.Error(w, "Bad Request", http.StatusBadRequest)
+		app.notFound(w)
 		return
 	}
 	// Use the fmt.Fprintf() function to interpolate the id value with our response
