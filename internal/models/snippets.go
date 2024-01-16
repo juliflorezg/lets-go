@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 )
 
@@ -16,7 +17,7 @@ type Snippet struct {
 }
 
 type SnippetModel struct {
-  DB *sql.DB
+	DB *sql.DB
 }
 
 func (sm *SnippetModel) Insert(title, content string, expires int) (int, error) {
@@ -32,17 +33,40 @@ func (sm *SnippetModel) Insert(title, content string, expires int) (int, error) 
 	}
 
 	id, err := result.LastInsertId()
-	if err != nil{
+	if err != nil {
 		return 0, err
 	}
 
 	return int(id), nil
 }
 
-func (sm *SnippetModel) Get(id int) (Snippet, error){
-  return Snippet{}, nil
+func (sm *SnippetModel) Get(id int) (Snippet, error) {
+	// return Snippet{}, nil
+
+	stmt := `SELECT id, title, content, created, expires FROM snippets
+	WHERE expires > UTC_TIMESTAMP() ADN id = ?`
+
+	row := sm.DB.QueryRow(stmt, id)
+
+	var s Snippet
+
+	// Here, we use row.Scan() to copy the values from each field in sql.Row to the
+	// corresponding field in the Snippet struct. The arguments
+	// to row.Scan are *pointers* to the place we want to copy the data into,
+	// and the number of arguments must be exactly the same as the number of
+	// columns returned by your statement
+	err := row.Scan(&s.ID, &s.Title, &s.Content, &s.Created, &s.Expires)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return Snippet{}, ErrNoRecord
+		} else {
+			return Snippet{}, err
+		}
+	}
+
+	return s, nil
 }
 
 func (sm *SnippetModel) Latest() ([]Snippet, error) {
-  return nil, nil
+	return nil, nil
 }
