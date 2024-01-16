@@ -44,7 +44,7 @@ func (sm *SnippetModel) Get(id int) (Snippet, error) {
 	// return Snippet{}, nil
 
 	stmt := `SELECT id, title, content, created, expires FROM snippets
-	WHERE expires > UTC_TIMESTAMP() ADN id = ?`
+	WHERE expires > UTC_TIMESTAMP() AND id = ?;`
 
 	row := sm.DB.QueryRow(stmt, id)
 
