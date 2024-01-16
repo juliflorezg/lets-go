@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"html/template"
 	"net/http"
 	"strconv"
 
@@ -17,27 +16,39 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	files := []string{
-		"./ui/html/base.tmpl.html",
-		"./ui/html/pages/home.tmpl.html",
-		"./ui/html/partials/nav.tmpl.html",
-	}
-
-	// we get back a template set from file reads
-	// ts, err := template.ParseFiles("./ui/html/pages/home.tmpl.html")
-	ts, err := template.ParseFiles(files...)
+	snippets, err := app.snippets.Latest()
 
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	// we know have to use the ExecuteTemplate() method to write the content of the "base" template as the response body.
-	err = ts.ExecuteTemplate(w, "base", nil)
+	for _, snippet := range snippets {
+		fmt.Fprintf(w, "%+v\n", snippet)
 
-	if err != nil {
-		app.serverError(w, r, err)
 	}
+
+	// files := []string{
+	// 	"./ui/html/base.tmpl.html",
+	// 	"./ui/html/pages/home.tmpl.html",
+	// 	"./ui/html/partials/nav.tmpl.html",
+	// }
+
+	// // we get back a template set from file reads
+	// // ts, err := template.ParseFiles("./ui/html/pages/home.tmpl.html")
+	// ts, err := template.ParseFiles(files...)
+
+	// if err != nil {
+	// 	app.serverError(w, r, err)
+	// 	return
+	// }
+
+	// // we know have to use the ExecuteTemplate() method to write the content of the "base" template as the response body.
+	// err = ts.ExecuteTemplate(w, "base", nil)
+
+	// if err != nil {
+	// 	app.serverError(w, r, err)
+	// }
 }
 
 func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
