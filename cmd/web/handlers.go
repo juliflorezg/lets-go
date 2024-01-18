@@ -24,28 +24,30 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, snippet := range snippets {
-		fmt.Fprintf(w, "%+v\n", snippet)
+	// for _, snippet := range snippets {
+	// 	fmt.Fprintf(w, "%+v\n", snippet)
+	// }
 
+	files := []string{
+		"./ui/html/base.tmpl.html",
+		"./ui/html/pages/home.tmpl.html",
+		"./ui/html/partials/nav.tmpl.html",
 	}
 
-	// files := []string{
-	// 	"./ui/html/base.tmpl.html",
-	// 	"./ui/html/pages/home.tmpl.html",
-	// 	"./ui/html/partials/nav.tmpl.html",
-	// }
-
 	// // we get back a template set from file reads
-	// // ts, err := template.ParseFiles("./ui/html/pages/home.tmpl.html")
-	// ts, err := template.ParseFiles(files...)
+	// ts, err := template.ParseFiles("./ui/html/pages/home.tmpl.html")
+	ts, err := template.ParseFiles(files...)
 
-	// if err != nil {
-	// 	app.serverError(w, r, err)
-	// 	return
-	// }
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	td := templateData{
+		Snippets: snippets,
+	}
 
-	// // we know have to use the ExecuteTemplate() method to write the content of the "base" template as the response body.
-	// err = ts.ExecuteTemplate(w, "base", nil)
+	// we know have to use the ExecuteTemplate() method to write the content of the "base" template as the response body.
+	err = ts.ExecuteTemplate(w, "base", td)
 
 	// if err != nil {
 	// 	app.serverError(w, r, err)
