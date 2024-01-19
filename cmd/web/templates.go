@@ -3,6 +3,7 @@ package main
 import (
 	"html/template"
 	"path/filepath"
+	"time"
 
 	"github.com/juliflorezg/lets-go/internal/models"
 )
@@ -13,6 +14,17 @@ type templateData struct {
 	CurrentYear int
 	Snippet     models.Snippet
 	Snippets    []models.Snippet
+}
+
+// Create a humanDate function which returns a nicely formatted string
+// representation of a time.Time object
+func humanDate(t time.Time) string {
+	// that date must be used (https://pkg.go.dev/time@go1.21.6#Time.Format)
+	return t.Format("02 Jan 2006 at 15:04 MST")
+}
+
+var functions = template.FuncMap{
+	"humanDate": humanDate,
 }
 
 func newTemplateCache() (map[string]*template.Template, error) {
@@ -34,7 +46,11 @@ func newTemplateCache() (map[string]*template.Template, error) {
 		name := filepath.Base(page)
 
 		// Parse the base template file into a template set.
-		ts, err := template.ParseFiles("./ui/html/base.tmpl.html")
+		// The template.FuncMap must be registered with the template set before we
+		// call the ParseFiles() method. This means we have to use template.New() to
+		// create an empty template set, use the Funcs() method to register the
+		// template.FuncMap, and then parse the file as normal.
+		ts, err := template.New(name).Funcs(functions).ParseFiles("./ui/html/base.tmpl.html")
 		if err != nil {
 			return nil, err
 		}
