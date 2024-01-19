@@ -7,8 +7,11 @@
   </div>
   <pre><code>{{.Content}}</code></pre>
   <div class="metadata">
-    <time>Created: {{.Created}}</time>
-    <time>Expires: {{.Expires}}</time>
+    <!-- use of template function registered in newTemplateCache fn -->
+    <time>Created: {{humanDate .Created}}</time>
+    <!-- method pipelining  (output of one function can be used as input to other function)-->
+    <!-- <time>{{.Created | humanDate | printf "Created : %s"}}</time> -->
+    <time>Expires: {{humanDate .Expires}}</time>
   </div>
 </div>
 {{end}} {{end}}
