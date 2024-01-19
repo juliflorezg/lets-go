@@ -22,7 +22,7 @@ func newTemplateCache() (map[string]*template.Template, error) {
 	// match the pattern "./ui/html/pages/*.tmpl". This will essentially gives
 	// us a slice of all the filepaths for our application 'page' templates
 	// like: [ui/html/pages/home.tmpl ui/html/pages/view.tmpl]
-	pages, err := filepath.Glob("./ui/html/pages*.tmpl.html")
+	pages, err := filepath.Glob("./ui/html/pages/*.tmpl.html")
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func newTemplateCache() (map[string]*template.Template, error) {
 			return nil, err
 		}
 
-		cache[name] = ts // keys would be like: home.tmpl.html 
+		cache[name] = ts // keys would be like: home.tmpl.html
 	}
 
 	return cache, nil
