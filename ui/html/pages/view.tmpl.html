@@ -8,9 +8,9 @@
   <pre><code>{{.Content}}</code></pre>
   <div class="metadata">
     <!-- use of template function registered in newTemplateCache fn -->
-    <time>Created: {{humanDate .Created}}</time>
+    <!-- <time>Created: {{humanDate .Created}}</time> -->
     <!-- method pipelining  (output of one function can be used as input to other function)-->
-    <!-- <time>{{.Created | humanDate | printf "Created : %s"}}</time> -->
+    <time>{{.Created | humanDate | printf "Created : %s"}}</time>
     <time>Expires: {{humanDate .Expires}}</time>
   </div>
 </div>

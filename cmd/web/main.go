@@ -45,12 +45,12 @@ func main() {
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
-	}	
+	}
 
 	//> Establish the dependencies for the handlers
 	app := &application{
-		logger:   logger,
-		snippets: &models.SnippetModel{DB: db},
+		logger:        logger,
+		snippets:      &models.SnippetModel{DB: db},
 		templateCache: templateCache,
 	}
 
