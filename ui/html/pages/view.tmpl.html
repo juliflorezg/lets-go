@@ -1,0 +1,17 @@
+{{define "title"}}Snippet #{{.Snippet.ID}}{{end}} {{define "main"}} {{with
+.Snippet}}
+<div class="snippet">
+  <div class="metadata">
+    <strong>{{.Title}}</strong>
+    <span>#{{.ID}}</span>
+  </div>
+  <pre><code>{{.Content}}</code></pre>
+  <div class="metadata">
+    <!-- use of template function registered in newTemplateCache fn -->
+    <!-- <time>Created: {{humanDate .Created}}</time> -->
+    <!-- method pipelining  (output of one function can be used as input to other function)-->
+    <time>{{.Created | humanDate | printf "Created : %s"}}</time>
+    <time>Expires: {{humanDate .Expires}}</time>
+  </div>
+</div>
+{{end}} {{end}}

@@ -23,32 +23,10 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, snippet := range snippets {
-		fmt.Fprintf(w, "%+v\n", snippet)
+	templateData := app.newTemplateData(r)
+	templateData.Snippets = snippets
 
-	}
-
-	// files := []string{
-	// 	"./ui/html/base.tmpl.html",
-	// 	"./ui/html/pages/home.tmpl.html",
-	// 	"./ui/html/partials/nav.tmpl.html",
-	// }
-
-	// // we get back a template set from file reads
-	// // ts, err := template.ParseFiles("./ui/html/pages/home.tmpl.html")
-	// ts, err := template.ParseFiles(files...)
-
-	// if err != nil {
-	// 	app.serverError(w, r, err)
-	// 	return
-	// }
-
-	// // we know have to use the ExecuteTemplate() method to write the content of the "base" template as the response body.
-	// err = ts.ExecuteTemplate(w, "base", nil)
-
-	// if err != nil {
-	// 	app.serverError(w, r, err)
-	// }
+	app.render(w, r, http.StatusOK, "home.tmpl.html", templateData)
 }
 
 func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
@@ -99,8 +77,10 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// fmt.Fprintf(w, "Display a specific snippet for ID %d...", id)
-	fmt.Fprintf(w, "%+v", snippet)
+	templateData := app.newTemplateData(r)
+	templateData.Snippet = snippet
+
+	app.render(w, r, http.StatusOK, "view.tmpl.html", templateData)
 }
 
 func (app *application) fooHandler(w http.ResponseWriter, r *http.Request) {

@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"runtime/debug"
+	"time"
 )
 
 // The serverError helper writes a log entry at Error level (including the request
@@ -32,4 +35,42 @@ func (app *application) clientError(w http.ResponseWriter, statusCode int) {
 // the user.
 func (app *application) notFound(w http.ResponseWriter) {
 	app.clientError(w, http.StatusNotFound)
+}
+
+func (app *application) render(w http.ResponseWriter, r *http.Request, status int, page string, data templateData) {
+	// Retrieve the appropriate template set from the cache based on the page
+	// name (like 'home.tmpl'). If no entry exists in the cache with the
+	// provided name, then create a new error and call the serverError() helper
+	// method that we made earlier and return.
+	ts, ok := app.templateCache[page]
+
+	if !ok {
+		err := fmt.Errorf("The template %s does not exist", page)
+		app.serverError(w, r, err)
+		return
+	}
+
+	//initialize a new buffer
+	buf := new(bytes.Buffer)
+
+	// Write the template to the buffer, instead of straight to the
+	// http.ResponseWriter. If there's an error, call our serverError() helper
+	// and then return.
+	err := ts.ExecuteTemplate(buf, "base", data)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// Write out the provided HTTP status code ('200 OK', '400 Bad Request' etc).
+	w.WriteHeader(status)
+
+	// Write the contents of the buffer to the http.ResponseWriter.
+	buf.WriteTo(w)
+}
+
+func (app *application) newTemplateData(r *http.Request) templateData {
+	return templateData{
+		CurrentYear: time.Now().Year(),
+	}
 }
