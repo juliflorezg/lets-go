@@ -22,5 +22,6 @@ func (app *application) routes() http.Handler {
 	//subtree path, if we make a request to /foo it will automatically redirect to /foo/
 	mux.HandleFunc("/foo/", app.fooHandler)
 
-	return app.logRequest(secureHeaders(mux))
+	// Wrap the existing chain with the recoverPanic middleware.
+	return app.recoverPanic(app.logRequest(secureHeaders(mux)))
 }
