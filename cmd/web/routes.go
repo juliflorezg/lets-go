@@ -2,7 +2,7 @@ package main
 
 import "net/http"
 
-func (app *application) routes() *http.ServeMux {
+func (app *application) routes() http.Handler {
 	// Here we use the http.NewServeMux() fun to initialize a new servermux(router), then
 	// register the app.home method as the handler for the "/" URL route/pattern
 	mux := http.NewServeMux()
@@ -22,5 +22,5 @@ func (app *application) routes() *http.ServeMux {
 	//subtree path, if we make a request to /foo it will automatically redirect to /foo/
 	mux.HandleFunc("/foo/", app.fooHandler)
 
-	return mux
+	return secureHeaders(mux)
 }
