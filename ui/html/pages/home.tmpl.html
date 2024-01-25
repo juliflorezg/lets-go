@@ -12,7 +12,7 @@
   <tbody>
     {{range .Snippets}}
     <tr>
-      <td><a href="/snippet/view?id={{.ID}}">{{.Title}}</a></td>
+      <td><a href="/snippet/view/{{.ID}}">{{.Title}}</a></td>
       <!-- use of template function registered in newTemplateCache fn -->
       <td>{{humanDate .Created}}</td>
       <td>#{{.ID}}</td>
