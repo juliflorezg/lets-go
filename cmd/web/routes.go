@@ -1,8 +1,12 @@
 package main
 
-import "net/http"
+import (
+	"net/http"
 
-func (app *application) routes() *http.ServeMux {
+	"github.com/justinas/alice"
+)
+
+func (app *application) routes() http.Handler {
 	// Here we use the http.NewServeMux() fun to initialize a new servermux(router), then
 	// register the app.home method as the handler for the "/" URL route/pattern
 	mux := http.NewServeMux()
@@ -22,5 +26,13 @@ func (app *application) routes() *http.ServeMux {
 	//subtree path, if we make a request to /foo it will automatically redirect to /foo/
 	mux.HandleFunc("/foo/", app.fooHandler)
 
-	return mux
+	// Create a middleware chain containing our 'standard' middleware
+	// which will be used for every request our application receives.
+	mdChain := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
+
+	// Wrap the existing chain with the recoverPanic middleware.
+	// return app.recoverPanic(app.logRequest(secureHeaders(mux)))
+
+	// Return the 'standard' middleware chain followed by the servemux
+	return mdChain.Then(mux)
 }
