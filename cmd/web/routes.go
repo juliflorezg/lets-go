@@ -31,6 +31,13 @@ func (app *application) routes() http.Handler {
 	//subtree path, if we make a request to /foo it will automatically redirect to /foo/
 	// mux.HandleFunc("/foo/", app.fooHandler)
 
+	// Create a handler function which wraps our notFound() helper, and then
+	// assign it as the custom handler for 404 Not Found responses.
+	// Can also be defined for 405 Method Not Allowed by using router.MethodNotAllowed
+	router.NotFound = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		app.notFound(w)
+	})
+
 	router.HandlerFunc(http.MethodGet, "/", app.home)
 	router.HandlerFunc(http.MethodGet, "/snippet/view/:id", app.snippetView)
 	router.HandlerFunc(http.MethodGet, "/snippet/create", app.snippetCreate)
