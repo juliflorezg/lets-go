@@ -51,10 +51,29 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 	// 	return
 	// }
 
-	title := "Loguetown Arc"
-	content := "After Nami officially joins, the crew heads to the last town before the entrance to the Grand Line, Loguetown, the place where Gold Roger was both born and executed. Not only will they have to deal with a powerful Marine captain, but also previous enemies looking for revenge."
+	// First we call r.ParseForm() which adds any data in POST request bodies
+	// to the r.PostForm map. This also works in the same way for PUT and PATCH
+	// requests. If there are any errors, we use our app.ClientError() helper to
+	// send a 400 Bad Request response to the user.
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
 
-	expires := 30
+	title := r.PostForm.Get("title")
+	content := r.PostForm.Get("content")
+
+	// The r.PostForm.Get() method always returns the form data as a *string*.
+	// However, we're expecting our expires value to be a number, and want to
+	// represent it in our Go code as an integer. So we need to manually covert
+	// the form data to an integer using strconv.Atoi(), and we send a 400 Bad
+	// Request response if the conversion fails.
+	expires, err := strconv.Atoi(r.PostForm.Get("expires"))
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
 
 	// Pass the data to the SnippetModel.Insert() method, receiving the
 	// ID of the new record back.
