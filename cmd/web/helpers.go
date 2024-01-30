@@ -2,11 +2,14 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"runtime/debug"
 	"time"
+
+	"github.com/go-playground/form/v4"
 )
 
 // The serverError helper writes a log entry at Error level (including the request
@@ -84,4 +87,35 @@ func ReadUserIP(r *http.Request) string {
 		IPAddress = r.RemoteAddr
 	}
 	return IPAddress
+}
+
+// Create a new decodePostForm() helper method. The second parameter here, dst,
+// is the target destination that we want to decode the form data into.
+func (app *application) decodePostForm(w http.ResponseWriter, r *http.Request, dst any) error {
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return err
+	}
+
+	// Call Decode() on our decoder instance, passing the target destination as
+	// the first parameter
+	err = app.formDecoder.Decode(dst, r.PostForm)
+	if err != nil {
+		// If we try to use an invalid target destination, the Decode() method
+		// will return an error with the type *form.InvalidDecoderError. 
+		// We use errors.As() to check for this and raise a panic rather than returning
+		// the error.
+
+		var invalidDecoderError *form.InvalidDecoderError
+
+		if errors.As(err, &invalidDecoderError) {
+			panic(err)
+		}
+
+		// For all other errors, we return them as normal.
+		return err
+	}
+
+	return nil
 }
