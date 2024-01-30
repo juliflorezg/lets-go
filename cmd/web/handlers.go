@@ -8,7 +8,24 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/juliflorezg/lets-go/internal/models"
+	"github.com/juliflorezg/lets-go/internal/validator"
 )
+
+// Remove the explicit FieldErrors struct field and instead embed the Validator
+// struct. Embedding this means that our snippetCreateForm "inherits" all the
+// fields and methods of our Validator struct (including the FieldErrors field).
+
+// Update our snippetCreateForm struct to include struct tags which tell the
+// decoder how to map HTML form values into the different struct fields. So, for
+// example, here we're telling the decoder to store the value from the HTML form
+// input with the name "title" in the Title field. The struct tag `form:"-"`
+// tells the decoder to completely ignore a field during decoding.
+type snippetCreateForm struct {
+	Title               string `form:"title"`
+	Content             string `form:"content"`
+	Expires             int    `form:"expires"`
+	validator.Validator `form:"-"`
+}
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
@@ -32,7 +49,13 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Display the form for creating a new snippet.."))
+
+	data := app.newTemplateData(r)
+	data.Form = snippetCreateForm{
+		Expires: 365,
+	}
+
+	app.render(w, r, http.StatusOK, "create.tmpl.html", data)
 }
 
 func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
@@ -48,14 +71,88 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 	// 	return
 	// }
 
-	title := "Loguetown Arc"
-	content := "After Nami officially joins, the crew heads to the last town before the entrance to the Grand Line, Loguetown, the place where Gold Roger was both born and executed. Not only will they have to deal with a powerful Marine captain, but also previous enemies looking for revenge."
+	// First we call r.ParseForm() which adds any data in POST request bodies
+	// to the r.PostForm map. This also works in the same way for PUT and PATCH
+	// requests. If there are any errors, we use our app.ClientError() helper to
+	// send a 400 Bad Request response to the user.
 
-	expires := 30
+	//* this is done in the app decodeFormPost() method
+	// err := r.ParseForm()
+	// if err != nil {
+	// 	app.clientError(w, http.StatusBadRequest)
+	// 	return
+	// }
+
+	// title := r.PostForm.Get("title")
+	// content := r.PostForm.Get("content")
+
+	// The r.PostForm.Get() method always returns the form data as a *string*.
+	// However, we're expecting our expires value to be a number, and want to
+	// represent it in our Go code as an integer. So we need to manually covert
+	// the form data to an integer using strconv.Atoi(), and we send a 400 Bad
+	// Request response if the conversion fails.
+	// expires, err := strconv.Atoi(r.PostForm.Get("expires"))
+
+	var form snippetCreateForm
+
+	// Call the Decode() method of the form decoder, passing in the current
+	// request and *a pointer* to our snippetCreateForm struct. This will
+	// essentially fill our struct with the relevant values from the HTML form.
+	// If there is a problem, we return a 400 Bad Request response to the client
+	err := app.decodePostForm(w, r, &form)
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	// form := snippetCreateForm{
+	// 	Title:   r.PostForm.Get("title"),
+	// 	Content: r.PostForm.Get("content"),
+	// 	Expires: expires,
+	// }
+
+	// fieldErrors := make(map[string]string)
+
+	// if strings.TrimSpace(form.Title) == "" {
+	// 	form.FieldErrors["title"] = "This field cannot be blank"
+	// } else if utf8.RuneCountInString(form.Title) > 100 {
+	// 	form.FieldErrors["title"] = "This field cannot be more than 100 characters long"
+
+	// }
+
+	// if strings.TrimSpace(form.Content) == "" {
+	// 	form.FieldErrors["content"] = "This field cannot be blank"
+	// }
+	// if expires != 1 && expires != 7 && expires != 365 {
+	// 	form.FieldErrors["expires"] = "This field must equal 1, 7 or 365"
+	// }
+
+	// replace the previous checks with the methods from snippetCreateForm embedded struct Validator
+
+	form.CheckField(validator.NotBlank(form.Title), "title", "This field cannot be blank")
+	form.CheckField(validator.MaxChars(form.Title, 100), "title", "This field cannot be more than 100 characters long")
+	form.CheckField(validator.NotBlank(form.Content), "content", "This field cannot be blank")
+	form.CheckField(validator.PermittedValue(form.Expires, 1, 7, 365), "expires", "This field must equal 1, 7 or 365")
+
+	// If there are any validation errors, then re-display the create.tmpl template,
+	// passing in the snippetCreateForm instance as dynamic data in the Form
+	// field. Note that we use the HTTP status code 422 Unprocessable Entity
+	// when sending the response to indicate that there was a validation error
+
+	// Here we use the Valid() method to see if any of the checks failed. If they did,
+	// then re-render the template passing in the form in the same way as
+	// before.
+	if !form.Valid() {
+		// fmt.Fprint(w, form.FieldErrors)
+		data := app.newTemplateData(r)
+		data.Form = form
+		app.render(w, r, http.StatusUnprocessableEntity, "create.tmpl.html", data)
+		return
+	}
 
 	// Pass the data to the SnippetModel.Insert() method, receiving the
 	// ID of the new record back.
-	id, err := app.snippets.Insert(title, content, expires)
+	id, err := app.snippets.Insert(form.Title, form.Content, form.Expires)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
