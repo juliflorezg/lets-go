@@ -73,8 +73,10 @@ func (app *application) render(w http.ResponseWriter, r *http.Request, status in
 }
 
 func (app *application) newTemplateData(r *http.Request) templateData {
+	fmt.Printf("flash value in helper for SnippetView:::%v\n", app.sessionManager.GetString(r.Context(), "flash"))
 	return templateData{
 		CurrentYear: time.Now().Year(),
+		Flash:       app.sessionManager.PopString(r.Context(), "flash"),
 	}
 }
 
@@ -103,7 +105,7 @@ func (app *application) decodePostForm(w http.ResponseWriter, r *http.Request, d
 	err = app.formDecoder.Decode(dst, r.PostForm)
 	if err != nil {
 		// If we try to use an invalid target destination, the Decode() method
-		// will return an error with the type *form.InvalidDecoderError. 
+		// will return an error with the type *form.InvalidDecoderError.
 		// We use errors.As() to check for this and raise a panic rather than returning
 		// the error.
 

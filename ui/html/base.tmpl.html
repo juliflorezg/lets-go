@@ -25,7 +25,12 @@
       {{end}}
     </header>
     {{template "nav" .}}
-    <main>{{template "main" .}}</main>
+    <main>
+      <!-- Display the flash message if one exists -->
+      {{with .Flash}}
+      <div class="flash">{{.}}</div>
+      {{end}} {{template "main" .}}
+    </main>
     <footer>
       Powered by <a href="https://golang.org/">Go</a> - {{.CurrentYear}}
     </footer>
