@@ -63,6 +63,10 @@ func main() {
 	sessionManager := scs.New()
 	sessionManager.Store = mysqlstore.New(db)
 	sessionManager.Lifetime = 12 * time.Hour
+	// Setting this means that the cookie will only be sent by a user's web
+	// browser when a HTTPS connection is being used (and won't be sent over an
+	// unsecure HTTP connection)
+	sessionManager.Cookie.Secure = true
 
 	//> Establish the dependencies for the handlers
 	app := &application{
@@ -86,7 +90,7 @@ func main() {
 	logger.Info("starting server", "addr", srv.Addr)
 
 	//> Run the HTTP server
-	err = srv.ListenAndServe()
+	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
 	logger.Error(err.Error())
 	os.Exit(1)
 }
