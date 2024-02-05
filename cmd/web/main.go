@@ -93,8 +93,11 @@ func main() {
 		Handler: app.routes(),
 		// Create a *log.Logger from our structured logger handler, which writes
 		// log entries at Error level, and assign it to the ErrorLog field
-		ErrorLog:  slog.NewLogLogger(logger.Handler(), slog.LevelError),
-		TLSConfig: tlsConfig,
+		ErrorLog:     slog.NewLogLogger(logger.Handler(), slog.LevelError),
+		TLSConfig:    tlsConfig,
+		IdleTimeout:  time.Minute,
+		ReadTimeout:  5 * (time.Second),
+		WriteTimeout: 5 * (time.Second),
 	}
 
 	logger.Info("starting server", "addr", srv.Addr)
