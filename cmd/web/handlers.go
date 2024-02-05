@@ -27,6 +27,13 @@ type snippetCreateForm struct {
 	validator.Validator `form:"-"`
 }
 
+type userSignUpForm struct {
+	Name                string `form:"name"`
+	Email               string `form:"email"`
+	Password            string `form:"password"`
+	validator.Validator `form:"-"`
+}
+
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 	// removing manual check of "/" path since httprouter matches the "/" path exactly
@@ -208,7 +215,10 @@ func (app *application) fooHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) userSignUp(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Display an HTML form for signing up a new use")
+	// fmt.Fprintln(w, "Display an HTML form for signing up a new use")
+	data := app.newTemplateData(r)
+	data.Form = userSignUpForm{}
+	app.render(w, r, 200, "signup.tmpl.html", data)
 }
 func (app *application) userSignUpPost(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Create a new user")
