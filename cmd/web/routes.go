@@ -49,15 +49,20 @@ func (app *application) routes() http.Handler {
 	// need to switch to registering the route using the router.Handler() method.
 	router.Handler(http.MethodGet, "/", dynamicMd.ThenFunc(app.home))
 	router.Handler(http.MethodGet, "/snippet/view/:id", dynamicMd.ThenFunc(app.snippetView))
-	router.Handler(http.MethodGet, "/snippet/create", dynamicMd.ThenFunc(app.snippetCreate))
-	router.Handler(http.MethodPost, "/snippet/create", dynamicMd.ThenFunc(app.snippetCreatePost))
 
 	// routes for user authentication
 	router.Handler(http.MethodGet, "/user/signup", dynamicMd.ThenFunc(app.userSignUp))
-	router.Handler(http.MethodPost, "/user/signup", dynamicMd .ThenFunc(app.userSignUpPost))
-	router.Handler(http.MethodGet, "/user/login", dynamicMd .ThenFunc(app.userLogin))
-	router.Handler(http.MethodPost, "/user/login", dynamicMd .ThenFunc(app.userLoginPost))
-	router.Handler(http.MethodPost, "/user/logout", dynamicMd .ThenFunc(app.userLogoutPost))
+	router.Handler(http.MethodPost, "/user/signup", dynamicMd.ThenFunc(app.userSignUpPost))
+	router.Handler(http.MethodGet, "/user/login", dynamicMd.ThenFunc(app.userLogin))
+	router.Handler(http.MethodPost, "/user/login", dynamicMd.ThenFunc(app.userLoginPost))
+
+	// Protected (authenticated-only) application routes, using a new "protected"
+	// middleware chain which includes the requireAuthentication middleware.
+	protectedMd := dynamicMd.Append(app.requireAuthentication)
+
+	router.Handler(http.MethodGet, "/snippet/create", protectedMd.ThenFunc(app.snippetCreate))
+	router.Handler(http.MethodPost, "/snippet/create", protectedMd.ThenFunc(app.snippetCreatePost))
+	router.Handler(http.MethodPost, "/user/logout", protectedMd.ThenFunc(app.userLogoutPost))
 
 	// Create a middleware chain containing our 'standard' middleware
 	// which will be used for every request our application receives.
