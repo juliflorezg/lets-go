@@ -221,6 +221,7 @@ func (app *application) userSignUp(w http.ResponseWriter, r *http.Request) {
 	data.Form = userSignUpForm{}
 	app.render(w, r, 200, "signup.tmpl.html", data)
 }
+
 func (app *application) userSignUpPost(w http.ResponseWriter, r *http.Request) {
 
 	var form userSignUpForm
@@ -247,16 +248,42 @@ func (app *application) userSignUpPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = app.users.Insert(form.Name, form.Email, form.Password)
+
+	if err != nil {
+		if errors.Is(err, models.ErrDuplicateEmail) {
+			form.AddFieldError("email", "This email address is already in use")
+
+			data := app.newTemplateData(r)
+			data.Form = form
+
+			app.render(w, r, http.StatusUnprocessableEntity, "signup.tmpl.html", data)
+
+		} else {
+			app.serverError(w, r, err)
+		}
+
+		return
+	}
+
+	app.sessionManager.Put(r.Context(), "flash", "Your signup was successful. Please log in.")
+
+	//Redirect the user to the login page
+	http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+
 	// Otherwise send the placeholder response (for now!).
-	fmt.Fprintln(w, "Create a new user...")
+	// fmt.Fprintln(w, "Create a new user...")
 
 }
+
 func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Display an HTML form for logging an user")
 }
+
 func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Authenticate and login the user")
 }
+
 func (app *application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Logout the user")
 }
