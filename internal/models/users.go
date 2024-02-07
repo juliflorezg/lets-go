@@ -60,7 +60,33 @@ func (um *UserModel) Insert(name, email, password string) error {
 // the provided email address and password. This will return the relevant
 // user ID if they do.
 func (um *UserModel) Authenticate(email, password string) (int, error) {
-	return 0, nil
+	// return 0, nil
+
+	stmt := `SELECT id, email, hashed_password FROM users WHERE email = ?`
+
+	var user User
+	err := um.DB.QueryRow(stmt, email).Scan(&user.ID, &user.Email, &user.HashedPassword)
+
+	// err := row.Scan(&user.ID, &user.Email, &user.HashedPassword)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, ErrInvalidCredentials
+		} else {
+			return 0, err
+		}
+	}
+
+	err = bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(password))
+
+	if err != nil {
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			return 0, ErrInvalidCredentials
+		} else {
+			return 0, err
+		}
+	}
+	return user.ID, nil
 }
 
 func (um *UserModel) Exists(id int) (bool, error) {
