@@ -41,7 +41,9 @@ func (app *application) routes() http.Handler {
 	// Create a new middleware chain containing the middleware specific to our
 	// dynamic application routes. For now, this chain will only contain the
 	// LoadAndSave session middleware but we'll add more to it later.
-	dynamicMd := alice.New(app.sessionManager.LoadAndSave)
+
+	// Use the nosurf middleware on all our 'dynamic' routes.
+	dynamicMd := alice.New(app.sessionManager.LoadAndSave, app.noSurf)
 
 	// Update these routes to use the new dynamic middleware chain followed by
 	// the appropriate handler function. Note that because the alice ThenFunc()
@@ -60,6 +62,8 @@ func (app *application) routes() http.Handler {
 	// middleware chain which includes the requireAuthentication middleware.
 	protectedMd := dynamicMd.Append(app.requireAuthentication)
 
+	// Because the 'protected' middleware chain appends to the 'dynamic' chain
+	// the noSurf middleware will also be used on the three routes below too.
 	router.Handler(http.MethodGet, "/snippet/create", protectedMd.ThenFunc(app.snippetCreate))
 	router.Handler(http.MethodPost, "/snippet/create", protectedMd.ThenFunc(app.snippetCreatePost))
 	router.Handler(http.MethodPost, "/user/logout", protectedMd.ThenFunc(app.userLogoutPost))
