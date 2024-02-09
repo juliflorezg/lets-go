@@ -6,9 +6,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/julienschmidt/httprouter"
 	"github.com/juliflorezg/lets-go/internal/models"
 	"github.com/juliflorezg/lets-go/internal/validator"
+
+	"github.com/julienschmidt/httprouter"
 )
 
 // Remove the explicit FieldErrors struct field and instead embed the Validator
@@ -24,6 +25,13 @@ type snippetCreateForm struct {
 	Title               string `form:"title"`
 	Content             string `form:"content"`
 	Expires             int    `form:"expires"`
+	validator.Validator `form:"-"`
+}
+
+type userSignUpForm struct {
+	Name                string `form:"name"`
+	Email               string `form:"email"`
+	Password            string `form:"password"`
 	validator.Validator `form:"-"`
 }
 
@@ -205,4 +213,151 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) fooHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Foo"))
+}
+
+func (app *application) userSignUp(w http.ResponseWriter, r *http.Request) {
+	// fmt.Fprintln(w, "Display an HTML form for signing up a new use")
+	data := app.newTemplateData(r)
+	data.Form = userSignUpForm{}
+	app.render(w, r, 200, "signup.tmpl.html", data)
+}
+
+func (app *application) userSignUpPost(w http.ResponseWriter, r *http.Request) {
+
+	var form userSignUpForm
+
+	err := app.decodePostForm(w, r, &form)
+
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	// Validate the form contents using the helper functions
+	form.CheckField(validator.NotBlank(form.Name), "name", "This field cannot be blank")
+	form.CheckField(validator.NotBlank(form.Email), "email", "This field cannot be blank")
+	form.CheckField(validator.Matches(form.Email, validator.EmailRegex), "email", "This field must be a valid email address")
+	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank")
+	form.CheckField(validator.MinChars(form.Password, 8), "password", "This field must be at least 8 characters long")
+
+	// If there are any errors, re display the signup form along with a 422 status code
+	if !form.Valid() {
+		data := app.newTemplateData(r)
+		data.Form = form
+		app.render(w, r, http.StatusUnprocessableEntity, "signup.tmpl.html", data)
+		return
+	}
+
+	err = app.users.Insert(form.Name, form.Email, form.Password)
+
+	if err != nil {
+		if errors.Is(err, models.ErrDuplicateEmail) {
+			form.AddFieldError("email", "This email address is already in use")
+
+			data := app.newTemplateData(r)
+			data.Form = form
+
+			app.render(w, r, http.StatusUnprocessableEntity, "signup.tmpl.html", data)
+
+		} else {
+			app.serverError(w, r, err)
+		}
+
+		return
+	}
+
+	app.sessionManager.Put(r.Context(), "flash", "Your signup was successful. Please log in.")
+
+	//Redirect the user to the login page
+	http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+
+	// Otherwise send the placeholder response (for now!).
+	// fmt.Fprintln(w, "Create a new user...")
+
+}
+
+func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
+	// fmt.Fprintln(w, "Display an HTML form for logging an user")
+	data := app.newTemplateData(r)
+	data.Form = userSignUpForm{}
+
+	app.render(w, r, http.StatusOK, "login.tmpl.html", data)
+}
+
+func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
+
+	// Decode the form data into the userLoginForm struct.
+
+	var form userSignUpForm
+
+	err := app.decodePostForm(w, r, &form)
+
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	form.CheckField(validator.NotBlank(form.Email), "email", "This field cannot be blank")
+	form.CheckField(validator.Matches(form.Email, validator.EmailRegex), "email", "This field must be a valid email address")
+	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank")
+	form.CheckField(validator.MinChars(form.Password, 8), "password", "This field must be at least 8 characters long")
+
+	// If there are any errors, re display the login form along with a 422 status code
+	if !form.Valid() {
+		data := app.newTemplateData(r)
+		data.Form = form
+		app.render(w, r, http.StatusUnprocessableEntity, "login.tmpl.html", data)
+		return
+	}
+
+	// Check whether the credentials are valid. If they're not, add a generic
+	// non-field error message and re-display the login page
+	id, err := app.users.Authenticate(form.Email, form.Password)
+
+	if err != nil {
+		if errors.Is(err, models.ErrInvalidCredentials) {
+			form.AddNonFieldError("Invalid email or password")
+
+			data := app.newTemplateData(r)
+			data.Form = form
+
+			app.render(w, r, http.StatusUnprocessableEntity, "login.tmpl.html", data)
+		} else {
+			app.serverError(w, r, err)
+		}
+		return
+	}
+
+	// Use the RenewToken() method on the current session to change the session
+	// ID. It's good practice to generate a new session ID when the
+	// authentication state or privilege levels changes for the user (e.g. login
+	// and logout operations)
+	err = app.sessionManager.RenewToken(r.Context())
+
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// Add the ID of the current user to the session, so that they are now
+	// 'logged in'.
+	app.sessionManager.Put(r.Context(), "authenticatedUserID", id)
+
+	http.Redirect(w, r, "/snippet/create", http.StatusSeeOther)
+}
+
+func (app *application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
+
+	err := app.sessionManager.RenewToken(r.Context())
+
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	app.sessionManager.Pop(r.Context(), "authenticatedUserID")
+
+	app.sessionManager.Put(r.Context(), "flash", "You've logged out successfully")
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+
 }

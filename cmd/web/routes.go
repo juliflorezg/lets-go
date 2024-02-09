@@ -41,7 +41,9 @@ func (app *application) routes() http.Handler {
 	// Create a new middleware chain containing the middleware specific to our
 	// dynamic application routes. For now, this chain will only contain the
 	// LoadAndSave session middleware but we'll add more to it later.
-	dynamicMd := alice.New(app.sessionManager.LoadAndSave)
+
+	// Use the nosurf middleware on all our 'dynamic' routes.
+	dynamicMd := alice.New(app.sessionManager.LoadAndSave, app.noSurf)
 
 	// Update these routes to use the new dynamic middleware chain followed by
 	// the appropriate handler function. Note that because the alice ThenFunc()
@@ -49,8 +51,22 @@ func (app *application) routes() http.Handler {
 	// need to switch to registering the route using the router.Handler() method.
 	router.Handler(http.MethodGet, "/", dynamicMd.ThenFunc(app.home))
 	router.Handler(http.MethodGet, "/snippet/view/:id", dynamicMd.ThenFunc(app.snippetView))
-	router.Handler(http.MethodGet, "/snippet/create", dynamicMd.ThenFunc(app.snippetCreate))
-	router.Handler(http.MethodPost, "/snippet/create", dynamicMd.ThenFunc(app.snippetCreatePost))
+
+	// routes for user authentication
+	router.Handler(http.MethodGet, "/user/signup", dynamicMd.ThenFunc(app.userSignUp))
+	router.Handler(http.MethodPost, "/user/signup", dynamicMd.ThenFunc(app.userSignUpPost))
+	router.Handler(http.MethodGet, "/user/login", dynamicMd.ThenFunc(app.userLogin))
+	router.Handler(http.MethodPost, "/user/login", dynamicMd.ThenFunc(app.userLoginPost))
+
+	// Protected (authenticated-only) application routes, using a new "protected"
+	// middleware chain which includes the requireAuthentication middleware.
+	protectedMd := dynamicMd.Append(app.requireAuthentication)
+
+	// Because the 'protected' middleware chain appends to the 'dynamic' chain
+	// the noSurf middleware will also be used on the three routes below too.
+	router.Handler(http.MethodGet, "/snippet/create", protectedMd.ThenFunc(app.snippetCreate))
+	router.Handler(http.MethodPost, "/snippet/create", protectedMd.ThenFunc(app.snippetCreatePost))
+	router.Handler(http.MethodPost, "/user/logout", protectedMd.ThenFunc(app.userLogoutPost))
 
 	// Create a middleware chain containing our 'standard' middleware
 	// which will be used for every request our application receives.
