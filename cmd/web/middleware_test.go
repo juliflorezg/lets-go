@@ -49,6 +49,8 @@ func TestSecureHeaders(t *testing.T) {
 	expectedValue = "0"
 	assert.Equal(t, rs.Header.Get("X-XSS-Protection"), expectedValue)
 
+	// Check that the middleware has correctly called the next handler in line
+	// and the response status code and body are as expected.
 	assert.Equal(t, rs.StatusCode, http.StatusOK)
 
 	defer rs.Body.Close()
