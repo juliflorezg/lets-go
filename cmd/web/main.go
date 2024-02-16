@@ -20,8 +20,8 @@ import (
 
 type application struct {
 	logger         *slog.Logger
-	snippets       *models.SnippetModel
-	users          *models.UserModel
+	snippets       models.SnippetModelInterface // use of interfaces defined in models package
+	users          models.UserModelInterface    // use of interfaces defined in models package
 	templateCache  map[string]*template.Template
 	formDecoder    *form.Decoder
 	sessionManager *scs.SessionManager
