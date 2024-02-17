@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"html"
 	"io"
 	"log/slog"
@@ -106,7 +105,6 @@ func extractCSRFToken(t *testing.T, body string) string {
 	// first position, and the values of any captured data in the subsequent
 	// positions.
 	matches := csrfTokenRX.FindStringSubmatch(body)
-	fmt.Println(matches)
 
 	if len(matches) < 2 {
 		t.Fatal("no csrf token found in body")
