@@ -2,11 +2,14 @@ package main
 
 import (
 	"bytes"
+	"fmt"
+	"html"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
+	"regexp"
 	"testing"
 	"time"
 
@@ -14,6 +17,8 @@ import (
 	"github.com/go-playground/form/v4"
 	"github.com/juliflorezg/lets-go/internal/models/mocks"
 )
+
+var csrfTokenRX = regexp.MustCompile(`<input type="hidden" name="csrf_token" value="(.+)" />`)
 
 // Create a newTestApplication helper which returns an instance of our
 // application struct containing mocked dependencies.
@@ -93,4 +98,19 @@ func (ts *testServer) get(t *testing.T, urlPath string) (int, http.Header, strin
 	body = bytes.TrimSpace(body)
 
 	return rs.StatusCode, rs.Header, string(body)
+}
+
+func extractCSRFToken(t *testing.T, body string) string {
+	// Here we use the FindStringSubmatch method to extract the token from the HTML body.
+	// This returns an array with the entire matched pattern in the
+	// first position, and the values of any captured data in the subsequent
+	// positions.
+	matches := csrfTokenRX.FindStringSubmatch(body)
+	fmt.Println(matches)
+
+	if len(matches) < 2 {
+		t.Fatal("no csrf token found in body")
+	}
+	// make things like "&lt;" & "&quot;" to become < & "
+	return html.UnescapeString(matches[1])
 }
