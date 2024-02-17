@@ -75,6 +75,7 @@ func newTemplateCache() (map[string]*template.Template, error) {
 		patterns := []string{
 			"html/base.tmpl.html",
 			"html/partials/*.tmpl.html",
+			page,
 		}
 
 		// Use ParseFS() instead of ParseFiles() to parse the template files
