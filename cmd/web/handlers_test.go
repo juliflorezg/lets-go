@@ -53,3 +53,66 @@ func TestPing(t *testing.T) {
 	assert.Equal(t, status, http.StatusOK)
 	assert.Equal(t, body, "OK")
 }
+
+func TestSnippetView(t *testing.T) {
+	// create a new test struct app
+	app := NewTestApplication(t)
+
+	// create a new test server
+	ts := NewTestServer(t, app.routes())
+	defer ts.Close()
+
+	// define the struct for table-driven tests
+	tests := []struct {
+		name     string
+		urlPath  string
+		wantCode int
+		wantBody string
+	}{
+		{
+			name:     "Valid ID",
+			urlPath:  "/snippet/view/1",
+			wantCode: http.StatusOK,
+			wantBody: "Sample content for snippet 1",
+		},
+
+		{
+			name:     "Non-existent ID",
+			urlPath:  "/snippet/view/2",
+			wantCode: http.StatusNotFound,
+		},
+		{
+			name:     "Negative ID",
+			urlPath:  "/snippet/view/-5",
+			wantCode: http.StatusNotFound,
+		},
+		{
+			name:     "Decimal ID",
+			urlPath:  "/snippet/view/1.234",
+			wantCode: http.StatusNotFound,
+		},
+		{
+			name:     "String ID",
+			urlPath:  "/snippet/view/abc",
+			wantCode: http.StatusNotFound,
+		},
+		{
+			name:     "Empty ID",
+			urlPath:  "/snippet/view/",
+			wantCode: http.StatusNotFound,
+		},
+	}
+
+	// do the sub-tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			code, _, body := ts.get(t, tt.urlPath)
+
+			assert.Equal(t, code, tt.wantCode)
+			if tt.wantBody != "" {
+				assert.StringContains(t, body, tt.wantBody)
+			}
+		})
+	}
+
+}
