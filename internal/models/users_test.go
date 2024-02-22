@@ -31,6 +31,11 @@ func TestUserModelExists(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// skip the test if the "-short" flag is passed when running tests.
+			if testing.Short() {
+				t.Skip("models: skipping integration test")
+			}
+
 			// Call the newTestDB() helper function to get a connection pool to
 			// our test database. Calling this here -- inside t.Run() -- means
 			// that fresh database tables and data will be set up and torn down
