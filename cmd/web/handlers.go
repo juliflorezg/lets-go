@@ -366,3 +366,10 @@ func (app *application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
 func ping(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK"))
 }
+
+func (app *application) about(w http.ResponseWriter, r *http.Request) {
+	data := app.newTemplateData(r)
+	// data.Form = userSignUpForm{}
+
+	app.render(w, r, http.StatusOK, "about.tmpl.html", data)
+}

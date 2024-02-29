@@ -61,7 +61,8 @@ func (app *application) routes() http.Handler {
 	// method returns a http.Handler (rather than a http.HandlerFunc) we also
 	// need to switch to registering the route using the router.Handler() method.
 	// router.HandlerFunc(http.MethodGet, "/ping", ping)
-	router.Handler(http.MethodGet, "/", dynamicMd.ThenFunc(app.home))
+	// router.Handler(http.MethodGet, "/", dynamicMd.ThenFunc(app.home))
+	router.Handler(http.MethodGet, "/", dynamicMd.Then(http.HandlerFunc(app.home)))
 	router.Handler(http.MethodGet, "/snippet/view/:id", dynamicMd.ThenFunc(app.snippetView))
 
 	// routes for user authentication
@@ -69,6 +70,9 @@ func (app *application) routes() http.Handler {
 	router.Handler(http.MethodPost, "/user/signup", dynamicMd.ThenFunc(app.userSignUpPost))
 	router.Handler(http.MethodGet, "/user/login", dynamicMd.ThenFunc(app.userLogin))
 	router.Handler(http.MethodPost, "/user/login", dynamicMd.ThenFunc(app.userLoginPost))
+
+	//guided exercises
+	router.Handler(http.MethodGet, "/about", dynamicMd.ThenFunc(app.about))
 
 	// Protected (authenticated-only) application routes, using a new "protected"
 	// middleware chain which includes the requireAuthentication middleware.
