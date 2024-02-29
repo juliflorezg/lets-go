@@ -25,6 +25,7 @@ type application struct {
 	templateCache  map[string]*template.Template
 	formDecoder    *form.Decoder
 	sessionManager *scs.SessionManager
+	isDebug        bool
 }
 
 func main() {
@@ -33,9 +34,10 @@ func main() {
 	//> pass the runtime configuration settings for the application
 	addr := flag.String("addr", ":4000", "HTTP Network Address")
 	dsn := flag.String("dsn", "web:web24pass_@@/snippetbox?parseTime=true", "MySQL data source name")
+	isDebugMode := flag.Bool("debug", false, "this flag is used to run the app in debug mode")
 
 	// this assigns the value passed on runtime to the addr variable
-	// must be used before using the addr variable
+	// must be used before using the addr variable:_
 	flag.Parse()
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
@@ -78,6 +80,7 @@ func main() {
 		templateCache:  templateCache,
 		formDecoder:    formDecoder,
 		sessionManager: sessionManager,
+		isDebug:        *isDebugMode,
 	}
 
 	// Initialize a tls.Config struct to hold the non-default TLS settings we
