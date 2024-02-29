@@ -28,6 +28,7 @@ type snippetCreateForm struct {
 	validator.Validator `form:"-"`
 }
 
+// we're using struct embedding here: validator.Validator struct type is embedded in userSignUpForm, thus, this form type has access to all of Validator fields & methods
 type userSignUpForm struct {
 	Name                string `form:"name"`
 	Email               string `form:"email"`
