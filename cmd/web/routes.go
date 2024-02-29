@@ -48,6 +48,7 @@ func (app *application) routes() http.Handler {
 	//subtree path, if we make a request to /foo it will automatically redirect to /foo/
 	// mux.HandleFunc("/foo/", app.fooHandler)
 
+	router.HandlerFunc(http.MethodGet, "/ping", ping)
 	// Create a new middleware chain containing the middleware specific to our
 	// dynamic application routes. For now, this chain will only contain the
 	// LoadAndSave session middleware but we'll add more to it later.
@@ -59,6 +60,7 @@ func (app *application) routes() http.Handler {
 	// the appropriate handler function. Note that because the alice ThenFunc()
 	// method returns a http.Handler (rather than a http.HandlerFunc) we also
 	// need to switch to registering the route using the router.Handler() method.
+	// router.HandlerFunc(http.MethodGet, "/ping", ping)
 	router.Handler(http.MethodGet, "/", dynamicMd.ThenFunc(app.home))
 	router.Handler(http.MethodGet, "/snippet/view/:id", dynamicMd.ThenFunc(app.snippetView))
 
