@@ -141,7 +141,7 @@ func TestUserSignUp(t *testing.T) {
 		validPassword = "validPa$$word"
 		validEmail    = "rob@example.com"
 		// formTag is used to check that when we pass incorrect data, the response contains the same signup form (page has recharged the form with relevant errors) so the same form tag must be present in response body
-		formTag       = `<form action="/user/signup" method="POST" novalidate>`
+		formTag = `<form action="/user/signup" method="POST" novalidate>`
 	)
 
 	// add the table-driven tests
@@ -241,4 +241,39 @@ func TestUserSignUp(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSnippetCreate(t *testing.T) {
+	app := NewTestApplication(t)
+	ts := NewTestServer(t, app.routes())
+	defer ts.Close()
+
+	t.Run("Unauthenticated user", func(t *testing.T) {
+		status, header, _ := ts.get(t, "/snippet/create")
+
+		assert.Equal(t, status, http.StatusSeeOther)
+		assert.Equal(t, header.Get("Location"), "/user/login")
+
+	})
+
+	t.Run("Authenticated user", func(t *testing.T) {
+		_, _, body := ts.get(t, "/user/login")
+
+		validCSRFToken := extractCSRFToken(t, body)
+
+		const (
+			validEmail    = "alice@example.com"
+			validPassword = "pa$$word"
+		)
+		form := url.Values{}
+		form.Add("email", validEmail)
+		form.Add("password", validPassword)
+		form.Add("csrf_token", validCSRFToken)
+		ts.postForm(t, "/user/login", form)
+
+		status, _, body := ts.get(t, "/snippet/create")
+
+		assert.Equal(t, status, http.StatusOK)
+		assert.StringContains(t, body, `<form action="/snippet/create" method="POST">`)
+	})
 }
