@@ -344,7 +344,13 @@ func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 	// 'logged in'.
 	app.sessionManager.Put(r.Context(), "authenticatedUserID", id)
 
-	http.Redirect(w, r, "/snippet/create", http.StatusSeeOther)
+	// if user was trying to visit a page prior to login, redirect them to that page
+	if urlToVisit := app.sessionManager.PopString(r.Context(), "urlToVisit"); urlToVisit != "" {
+		http.Redirect(w, r, urlToVisit, http.StatusSeeOther)
+	} else {
+		http.Redirect(w, r, "/snippet/create", http.StatusSeeOther)
+	}
+
 }
 
 func (app *application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
