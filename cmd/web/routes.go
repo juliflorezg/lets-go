@@ -83,6 +83,7 @@ func (app *application) routes() http.Handler {
 	router.Handler(http.MethodGet, "/snippet/create", protectedMd.ThenFunc(app.snippetCreate))
 	router.Handler(http.MethodPost, "/snippet/create", protectedMd.ThenFunc(app.snippetCreatePost))
 	router.Handler(http.MethodPost, "/user/logout", protectedMd.ThenFunc(app.userLogoutPost))
+	router.Handler(http.MethodGet, "/account/view", protectedMd.ThenFunc(app.accountView))
 
 	// Create a middleware chain containing our 'standard' middleware
 	// which will be used for every request our application receives.
