@@ -373,3 +373,25 @@ func (app *application) about(w http.ResponseWriter, r *http.Request) {
 
 	app.render(w, r, http.StatusOK, "about.tmpl.html", data)
 }
+
+func (app *application) accountView(w http.ResponseWriter, r *http.Request) {
+	id := app.sessionManager.GetInt(r.Context(), "authenticatedUserID")
+
+	user, err := app.users.Get(id)
+	templateData := app.newTemplateData(r)
+	templateData.User = user
+
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+
+		} else {
+			app.serverError(w, r, err)
+
+		}
+		return
+	}
+
+	// fmt.Fprintf(w, "%+v", user)
+	app.render(w, r, http.StatusOK, "account.tmpl.html", templateData)
+}
