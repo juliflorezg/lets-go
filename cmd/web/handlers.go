@@ -420,4 +420,26 @@ func (app *application) accountPasswordUpdate(w http.ResponseWriter, r *http.Req
 
 func (app *application) accountPasswordUpdatePost(w http.ResponseWriter, r *http.Request) {
 
+	var form userChangePasswordForm
+
+	err := app.decodePostForm(w, r, &form)
+
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	form.CheckField(validator.NotBlank(form.CurrentPassword), "currentPassword", "This field is required")
+	form.CheckField(validator.NotBlank(form.NewPassword), "newPassword", "This field is required")
+	form.CheckField(validator.NotBlank(form.NewPasswordConfirmation), "newPasswordConfirmation", "This field is required")
+	form.CheckField(validator.MinChars(form.NewPassword, 8), "newPassword", "Your new password must be at least 8 characters")
+	form.CheckField(form.NewPassword == form.NewPasswordConfirmation, "newPasswordConfirmation", "The passwords don't match")
+
+	if !form.Valid() {
+		data := app.newTemplateData(r)
+		data.Form = form
+
+		app.render(w, r, http.StatusUnprocessableEntity, "password.tmpl.html", data)
+		return
+	}
 }
