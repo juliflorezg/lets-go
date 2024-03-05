@@ -36,6 +36,13 @@ type userSignUpForm struct {
 	validator.Validator `form:"-"`
 }
 
+type userChangePasswordForm struct {
+	CurrentPassword         string `form:"current_password"`
+	NewPassword             string `form:"new_password"`
+	NewPasswordConfirmation string `form:"new_password_confirmation"`
+	validator.Validator     `form:"-"`
+}
+
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 	// removing manual check of "/" path since httprouter matches the "/" path exactly
@@ -400,4 +407,17 @@ func (app *application) accountView(w http.ResponseWriter, r *http.Request) {
 
 	// fmt.Fprintf(w, "%+v", user)
 	app.render(w, r, http.StatusOK, "account.tmpl.html", templateData)
+}
+
+func (app *application) accountPasswordUpdate(w http.ResponseWriter, r *http.Request) {
+	// w.Write([]byte("here we'll display a new page with a form for password update"))
+
+	data := app.newTemplateData(r)
+	data.Form = userChangePasswordForm{}
+
+	app.render(w, r, http.StatusOK, "password.tmpl.html", data)
+}
+
+func (app *application) accountPasswordUpdatePost(w http.ResponseWriter, r *http.Request) {
+
 }
